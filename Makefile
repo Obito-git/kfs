@@ -23,6 +23,8 @@ fclean: clean
 run: $(iso)
 	@qemu-system-i386 -cdrom $(iso)
 
+rerun: fclean run
+
 iso: $(iso)
 
 $(iso): $(kernel) $(grub_cfg)
@@ -48,5 +50,5 @@ build/arch/$(arch)/%.o: arch/$(arch)/%.asm
 
 re: clean all
 
-.PHONY: all clean run iso kernel fclean
+.PHONY: all clean run iso kernel fclean rerun
 
