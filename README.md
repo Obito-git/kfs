@@ -210,7 +210,7 @@ The `/docs` directory contains:
 - [x] Implement a complete Makefile for the project
 - [x] Create and use a custom linker script (.ld)
 - [x] Target i386 (x86) architecture
-- [x] Kernel size must not exceed 10 MB (current: 31.7 KB)
+- [x] Final image size must not exceed 10 MB (current: ~ 3 MB)
 
 ### Boot Process
 
