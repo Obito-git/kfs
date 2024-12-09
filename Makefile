@@ -1,5 +1,5 @@
 arch ?= x86-i386
-kernel := build/kfs-kernel-$(arch)
+kernel := build/kfs-kernel-$(arch).bin
 iso := build/os-$(arch).iso
 target ?= $(arch)-kfs
 target_rust_config_file := arch/$(arch)/$(target).json
@@ -11,7 +11,7 @@ assembly_source_files := $(wildcard arch/$(arch)/*.asm)
 assembly_object_files := $(patsubst arch/$(arch)/%.asm, \
 	build/arch/$(arch)/%.o, $(assembly_source_files))
 
-all: $(kernel)
+all: $(iso)
 
 clean:
 	@rm -rf build/arch
@@ -32,7 +32,7 @@ $(iso): $(kernel) $(grub_cfg)
 	@mkdir -p build/isofiles/boot/grub
 	@cp $(kernel) build/isofiles/boot/kfs.bin
 	@cp $(grub_cfg) build/isofiles/boot/grub
-	@grub-mkrescue -o $(iso) build/isofiles 2> /dev/null
+	@grub-mkrescue --compress xz -o $(iso) build/isofiles 2> /dev/null
 	@rm -r build/isofiles
 
 $(kernel): kernel $(rust_os) $(assembly_object_files) $(linker_script)
