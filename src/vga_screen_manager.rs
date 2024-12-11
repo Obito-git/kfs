@@ -63,9 +63,18 @@ impl VGAScreenManager {
     }
 
     pub fn move_cursor(&mut self, nav: NavigationKey) {
-        if self.current_screen().move_cursor(nav) {
-            self.render_current_screen();
-        } else {
+        self.current_screen().move_cursor(nav);
+        self.render_cursor();
+    }
+
+    pub fn handle_backspace(&mut self) {
+        let line_number = self.current_screen().get_cursor().y;
+        if let Some(line_to_rerender) = self.current_screen().handle_backspace() {
+            for (i, screen_char) in line_to_rerender.iter().enumerate() {
+                unsafe {
+                    VGA_BUFFER.lock().as_mut().chars[line_number][i].write(*screen_char);
+                }
+            }
             self.render_cursor()
         }
     }

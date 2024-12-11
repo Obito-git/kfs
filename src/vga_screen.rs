@@ -1,6 +1,6 @@
+use crate::color::{ColorCode, ScreenChar};
 use crate::cursor::Cursor;
 use crate::keyboard::NavigationKey;
-use crate::color::{ColorCode, ScreenChar};
 use crate::vga_screen_manager::{VGA_BUFFER_HEIGHT, VGA_BUFFER_WIDTH};
 
 const HEADER: &'static str = r"
@@ -15,13 +15,10 @@ ____________/\\\_______/\\\\\\\\\_____
         ___________\///_____\///////////////__
 ";
 
-const SCREEN_BUFFER_HEIGHT: usize = VGA_BUFFER_HEIGHT * 2;
-const SCREEN_BUFFER_WIDTH: usize = VGA_BUFFER_WIDTH;
-
 pub struct VgaScreen {
     color_code: ColorCode,
     cursor: Cursor,
-    buffer: [[ScreenChar; SCREEN_BUFFER_WIDTH]; SCREEN_BUFFER_HEIGHT],
+    buffer: [[ScreenChar; VGA_BUFFER_WIDTH]; VGA_BUFFER_HEIGHT],
 }
 
 impl VgaScreen {
@@ -34,9 +31,9 @@ impl VgaScreen {
             color_code,
             cursor: Cursor {
                 x: 0,
-                y: SCREEN_BUFFER_HEIGHT - 1,
+                y: VGA_BUFFER_HEIGHT - 1,
             },
-            buffer: [[blank; SCREEN_BUFFER_WIDTH]; SCREEN_BUFFER_HEIGHT],
+            buffer: [[blank; VGA_BUFFER_WIDTH]; VGA_BUFFER_HEIGHT],
         };
         for c in HEADER.chars() {
             screen.write_byte(c as u8)
@@ -60,7 +57,7 @@ impl VgaScreen {
         match byte {
             b'\n' => self.new_line(),
             byte => {
-                if self.cursor.x >= SCREEN_BUFFER_WIDTH {
+                if self.cursor.x >= VGA_BUFFER_WIDTH {
                     self.new_line();
                 }
 
@@ -78,7 +75,21 @@ impl VgaScreen {
     pub fn get_cursor(&self) -> Cursor {
         Cursor {
             x: self.cursor.x,
-            y: self.cursor.y % VGA_BUFFER_HEIGHT,
+            y: self.cursor.y,
+        }
+    }
+
+    pub fn handle_backspace(&mut self) -> Option<&[ScreenChar; VGA_BUFFER_WIDTH]> {
+        if self.cursor.x > 0 {
+            let current_y = self.cursor.y;
+            self.cursor.x -= 1;
+            for i in self.cursor.x..VGA_BUFFER_WIDTH - 1 {
+                self.buffer[current_y][i] = self.buffer[current_y][i + 1]
+            }
+            self.buffer[current_y][VGA_BUFFER_WIDTH - 1] = self.blank();
+            Some(&self.buffer[current_y])
+        } else {
+            None
         }
     }
 
@@ -92,54 +103,27 @@ impl VgaScreen {
     }
 
     fn new_line(&mut self) {
-        for row in 1..SCREEN_BUFFER_HEIGHT {
-            for col in 0..SCREEN_BUFFER_WIDTH {
+        for row in 1..VGA_BUFFER_HEIGHT {
+            for col in 0..VGA_BUFFER_WIDTH {
                 let character = self.buffer[row][col];
                 self.buffer[row - 1][col] = character;
             }
         }
+        self.clear_row(VGA_BUFFER_HEIGHT - 1);
         self.cursor.x = 0;
-        if self.cursor.y != SCREEN_BUFFER_HEIGHT - 1 {
-            for row in (self.cursor.y..SCREEN_BUFFER_HEIGHT - 1).rev() {
-                for col in 0..SCREEN_BUFFER_WIDTH {
-                    let character = self.buffer[row][col];
-                    self.buffer[row + 1][col] = character;
-                }
-            }
-            self.clear_row(self.cursor.y);
-        } else {
-            self.clear_row(SCREEN_BUFFER_HEIGHT - 1);
-        }
     }
 
     fn clear_row(&mut self, row: usize) {
-        for col in 0..SCREEN_BUFFER_WIDTH {
+        for col in 0..VGA_BUFFER_WIDTH {
             self.buffer[row][col] = self.blank();
         }
     }
 
-    pub fn move_cursor(&mut self, nav: NavigationKey) -> bool {
+    pub fn move_cursor(&mut self, nav: NavigationKey) {
         match nav {
-            NavigationKey::Left => {
-                self.cursor.move_left();
-                false
-            }
-            NavigationKey::Right => {
-                self.cursor.move_right(&SCREEN_BUFFER_WIDTH);
-                false
-            }
-            NavigationKey::Up => {
-                let old_page = self.cursor.y / VGA_BUFFER_HEIGHT;
-                self.cursor.move_up();
-                let new_page = self.cursor.y / VGA_BUFFER_HEIGHT;
-                old_page != new_page
-            }
-            NavigationKey::Down => {
-                let old_page = self.cursor.y / VGA_BUFFER_HEIGHT;
-                self.cursor.move_down(&SCREEN_BUFFER_HEIGHT);
-                let new_page = self.cursor.y / VGA_BUFFER_HEIGHT;
-                old_page != new_page
-            }
+            NavigationKey::Left => self.cursor.move_left(),
+            NavigationKey::Right => self.cursor.move_right(&VGA_BUFFER_WIDTH),
+            _ => (),
         }
     }
 }

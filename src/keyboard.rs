@@ -63,12 +63,15 @@ pub enum NavigationKey {
     Down,
     Left,
     Right,
+    PageUp,
+    PageDown,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub enum ControlKey {
-    CtrlDown,
-    CtrlUp,
+    CtrlPressed,
+    CtrlReleased,
+    Backspace,
 }
 
 impl Key {
@@ -123,10 +126,13 @@ impl Key {
             0x50 => Some(Key::Navigation(NavigationKey::Down)),
             0x4B => Some(Key::Navigation(NavigationKey::Left)),
             0x4D => Some(Key::Navigation(NavigationKey::Right)),
+            0x49 => Some(Key::Navigation(NavigationKey::PageUp)),
+            0x51 => Some(Key::Navigation(NavigationKey::PageDown)),
 
             // Control
-            0x1D => Some(Key::Control(ControlKey::CtrlDown)),
-            0x9D => Some(Key::Control(ControlKey::CtrlUp)),
+            0x1D => Some(Key::Control(ControlKey::CtrlPressed)),
+            0x9D => Some(Key::Control(ControlKey::CtrlReleased)),
+            0x0E => Some(Key::Control(ControlKey::Backspace)),
 
             _ => None,
         }

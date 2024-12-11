@@ -1,6 +1,7 @@
 use crate::keyboard::Key;
 use crate::vga_screen_manager::VGA_BUFFER_WIDTH;
 use core::arch::asm;
+use crate::println;
 
 const KEYBOARD_STATUS_PORT: u16 = 0x64;
 const KEYBOARD_DATA_PORT: u16 = 0x60;
