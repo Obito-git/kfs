@@ -1,5 +1,5 @@
-use crate::color::{Color, ColorCode};
-use crate::vga_screen_manager::VGAScreenManager;
+use crate::io::color::{Color, ColorCode};
+use crate::io::vga::VGAScreenManager;
 use core::fmt;
 use lazy_static::lazy_static;
 use spin::mutex::Mutex;

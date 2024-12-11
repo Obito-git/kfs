@@ -2,18 +2,14 @@
 #![allow(internal_features)]
 #![feature(ptr_internals)]
 
-use crate::cpu_io::read_scancode;
-use crate::keyboard::{ControlKey, Key, Number, PrintableKey};
+use crate::io::read_scancode;
 use crate::print::VGA_SCREEN_MANAGER;
 use core::panic::PanicInfo;
+use io::keyboard::{ControlKey, Key, Number, PrintableKey};
 
-mod color;
-mod cpu_io;
-mod cursor;
-mod keyboard;
+mod io;
 mod print;
-mod vga_screen;
-mod vga_screen_manager;
+mod shell;
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {

@@ -1,19 +1,23 @@
-use crate::color::{ColorCode, ScreenChar};
-use crate::cpu_io::set_cursor_position;
-use crate::keyboard::NavigationKey;
+use crate::io::color::{ColorCode, ScreenChar};
+use crate::io::keyboard::NavigationKey;
+use crate::io::set_cursor_position;
 use crate::println;
-use crate::vga_screen::VgaScreen;
 use core::fmt;
 use core::fmt::Write;
 use core::ptr::Unique;
 use lazy_static::lazy_static;
 use spin::Mutex;
+use vga_screen::VgaScreen;
 use volatile::Volatile;
+
+mod status_panel;
+pub mod vga_screen;
 
 const SCREENS_COUNT: usize = 3;
 const VGA_BUFFER_ADDRESS: usize = 0xb8000;
 pub const VGA_BUFFER_HEIGHT: usize = 25;
 pub const VGA_BUFFER_WIDTH: usize = 80;
+pub const LAST_VGA_ROW_INDEX: usize = VGA_BUFFER_HEIGHT - 1;
 
 lazy_static! {
     static ref VGA_BUFFER: Mutex<Unique<VgaBuffer>> =
@@ -58,8 +62,10 @@ impl VGAScreenManager {
     }
 
     fn render_cursor(&mut self) {
-        let position = &self.current_screen().get_cursor();
-        set_cursor_position(position.x as u8, position.y as u8);
+        set_cursor_position(
+            self.current_screen().cursor_position as u8,
+            LAST_VGA_ROW_INDEX as u8,
+        );
     }
 
     pub fn move_cursor(&mut self, nav: NavigationKey) {
@@ -68,11 +74,10 @@ impl VGAScreenManager {
     }
 
     pub fn handle_backspace(&mut self) {
-        let line_number = self.current_screen().get_cursor().y;
         if let Some(line_to_rerender) = self.current_screen().handle_backspace() {
             for (i, screen_char) in line_to_rerender.iter().enumerate() {
                 unsafe {
-                    VGA_BUFFER.lock().as_mut().chars[line_number][i].write(*screen_char);
+                    VGA_BUFFER.lock().as_mut().chars[LAST_VGA_ROW_INDEX][i].write(*screen_char);
                 }
             }
             self.render_cursor()
