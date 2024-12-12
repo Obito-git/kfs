@@ -16,6 +16,19 @@ lazy_static! {
 }
 
 #[doc(hidden)]
+pub fn _write_to_command_line(byte: u8) {
+    let mut screen_mgr = VGA_SCREEN_MANAGER.lock();
+    screen_mgr.write_byte_to_the_command_line(byte)
+}
+
+#[macro_export]
+macro_rules! write_command_line_byte {
+    ($byte:expr) => ({
+        $crate::print::_write_to_command_line($byte);
+    });
+}
+
+#[doc(hidden)]
 pub(crate) fn _print(args: fmt::Arguments) {
     use core::fmt::Write;
     let mut screen_mgr = VGA_SCREEN_MANAGER.lock();

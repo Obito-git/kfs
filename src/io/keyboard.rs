@@ -139,9 +139,9 @@ impl Key {
     }
 }
 
-impl PrintableKey {
-    pub fn to_char(&self) -> char {
-        match self {
+impl From<PrintableKey> for char {
+    fn from(value: PrintableKey) -> Self {
+        match value {
             PrintableKey::Letter(l) => match l {
                 Letter::A => 'a',
                 Letter::B => 'b',
@@ -185,5 +185,12 @@ impl PrintableKey {
             PrintableKey::Space => ' ',
             PrintableKey::Enter => '\n',
         }
+    }
+}
+
+impl From<PrintableKey> for u8 {
+    fn from(value: PrintableKey) -> Self {
+        let value_char: char = value.into();
+        value_char as u8
     }
 }
