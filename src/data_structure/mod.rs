@@ -1,7 +1,8 @@
-pub enum IteratorType {
-    Len,
-    Capacity,
-}
+/// StackVec was created to hide every array operations in one file
+/// It is briefly tested and very poor, but I believe it is temporary solution,
+/// because after adding heap, we could probably write our allocator
+/// to use/reuse/adapt the existing Vector or probably Linked lists or something else
+/// that requires memory allocation
 #[derive(Debug, Copy, Clone)]
 pub struct StackVec<T, const N: usize> {
     data: [T; N],
@@ -9,6 +10,13 @@ pub struct StackVec<T, const N: usize> {
     len: usize,
 }
 
+#[allow(dead_code)]
+pub enum IteratorType {
+    Len,
+    Capacity,
+}
+
+#[allow(dead_code)]
 impl<T: Copy, const N: usize> StackVec<T, N> {
     pub fn new(default: T) -> Self {
         Self {
@@ -78,6 +86,10 @@ impl<T: Copy, const N: usize> StackVec<T, N> {
         }
     }
 
+    pub fn data(&self) -> &[T] {
+        &self.data[..self.len]
+    }
+
     pub fn get(&self, index: usize) -> Option<&T> {
         if index < self.len {
             Some(&self.data[index])
@@ -92,6 +104,13 @@ impl<T: Copy, const N: usize> StackVec<T, N> {
         } else {
             None
         }
+    }
+
+    pub fn slice(&self, range: core::ops::Range<usize>) -> &[T] {
+        let end = range.end.min(self.len);
+        let start = range.start.min(end);
+
+        &self.data[start..end]
     }
 
     pub fn get_unsafe(&self, index: usize) -> &T {
@@ -138,12 +157,10 @@ impl<T: Copy, const N: usize> StackVec<T, N> {
     }
 
     pub fn copy_from(&mut self, data: &[T; N], len: usize) {
-        // Copy elements from data
         for i in 0..len {
             self.data[i] = data[i];
         }
 
-        // Fill remaining elements up to our previous length with default
         for i in len..self.len {
             self.data[i] = self.default;
         }

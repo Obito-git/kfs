@@ -1,6 +1,5 @@
-use crate::data_structure::IteratorType;
 use crate::data_structure::IteratorType::Capacity;
-use crate::io::color::{Color, ColorCode, ScreenChar};
+use crate::io::color::{ColorCode, ScreenChar};
 use crate::io::keyboard::NavigationKey;
 use crate::io::set_cursor_position;
 use crate::println;

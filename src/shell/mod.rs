@@ -1,35 +1,29 @@
-use crate::data_structure::{IteratorType, StackVec};
+mod command;
+
+use crate::data_structure::StackVec;
 use crate::io::keyboard::NavigationKey;
 use crate::io::vga::{COMMAND_LINE_ROW_INDEX, VGA_BUFFER_HEIGHT, VGA_BUFFER_WIDTH};
+use crate::shell::command::Command;
 use core::fmt;
 use core::fmt::Write;
 
 pub const SHELL_PROMPT: &str = "$> ";
-pub const MAX_COMMAND_LEN: usize = VGA_BUFFER_WIDTH - SHELL_PROMPT.len();
-const MAX_COMMANDS_IN_HISTORY: usize = 20;
-
-struct CommandExecutor {}
-
-enum Command {
-    Reboot,
-    Help,
-}
-const COMMANDS: &[([u8; MAX_COMMAND_LEN], Command)] = &[([2; MAX_COMMAND_LEN], Command::Reboot)];
-impl Command {}
-
-impl TryFrom<&[u8; MAX_COMMAND_LEN]> for Command {
-    type Error = &'static str;
-
-    fn try_from(value: &[u8; MAX_COMMAND_LEN]) -> Result<Self, Self::Error> {
-        todo!()
-    }
-}
+const HEADER: &'static str = r"
+                ____________/\\\_______/\\\\\\\\\_____
+                 __________/\\\\\_____/\\\///////\\\___
+                  ________/\\\/\\\____\///______\//\\\__
+                   ______/\\\/\/\\\______________/\\\/___
+                    ____/\\\/__\/\\\___________/\\\//_____
+                     __/\\\\\\\\\\\\\\\\_____/\\\//________
+                      _\///////////\\\//____/\\\/___________
+                       ___________\/\\\_____/\\\\\\\\\\\\\\\_
+                        ___________\///_____\///////////////__
+";
 
 #[derive(Debug, Copy)]
 pub struct Shell {
     cursor_position: usize,
     buffer: StackVec<StackVec<u8, VGA_BUFFER_WIDTH>, VGA_BUFFER_HEIGHT>,
-    current_command: (usize, [u8; MAX_COMMAND_LEN]),
 }
 
 impl Shell {
@@ -39,8 +33,8 @@ impl Shell {
         let mut shell = Self {
             cursor_position: 0,
             buffer,
-            current_command: (0, [b' '; MAX_COMMAND_LEN]),
         };
+        shell.print_header();
         shell.print_prompt();
         shell
     }
@@ -51,8 +45,27 @@ impl Shell {
         }
     }
 
+    pub fn print_header(&mut self) {
+        self.write_str(HEADER).unwrap();
+    }
+
     pub fn write_byte_to_the_command_line(&mut self, byte: u8) {
-        self.write_byte(byte);
+        match byte {
+            b'\n' => {
+                let command = Command::try_from(self.buffer.get_unsafe(COMMAND_LINE_ROW_INDEX));
+                self.new_line();
+                match command {
+                    Ok(command) => {
+                        let handler = command.get_handler();
+                        handler(self);
+                    }
+                    Err(msg) => self.write_str(msg).unwrap(),
+                }
+                self.new_line();
+                self.print_prompt();
+            }
+            byte => self.write_byte(byte),
+        }
     }
 
     fn write_byte(&mut self, byte: u8) {
@@ -65,7 +78,8 @@ impl Shell {
             b'\n' => self.new_line(),
             byte => {
                 let cursor_position = self.cursor_position;
-                if self.get_command_line_data().push_at(cursor_position, byte) {
+                let cmd_line = self.buffer.get_mut_unsafe(COMMAND_LINE_ROW_INDEX);
+                if cmd_line.push_at(cursor_position, byte) {
                     self.cursor_position += 1;
                 }
             }
@@ -76,10 +90,6 @@ impl Shell {
         self.cursor_position
     }
 
-    pub fn get_command_line_data(&mut self) -> &mut StackVec<u8, VGA_BUFFER_WIDTH> {
-        self.buffer.get_mut_unsafe(COMMAND_LINE_ROW_INDEX)
-    }
-
     fn new_line(&mut self) {
         for row in 1..VGA_BUFFER_HEIGHT {
             let (row_data, row_len) = self.buffer.get_unsafe(row).copy();
@@ -88,14 +98,15 @@ impl Shell {
                 .copy_from(&row_data, row_len);
         }
 
-        self.get_command_line_data().clear();
+        let cmd_line = self.buffer.get_mut_unsafe(COMMAND_LINE_ROW_INDEX);
+        cmd_line.clear();
 
         self.cursor_position = 0;
-        self.print_prompt()
     }
 
-    fn clear_row(&mut self, row: usize) {
-        self.buffer.get_mut_unsafe(row).clear();
+    fn clear_buffer(&mut self) {
+        self.buffer = StackVec::new(StackVec::new(b' '));
+        self.cursor_position = 0;
     }
 
     pub fn get_data(&self) -> &StackVec<StackVec<u8, VGA_BUFFER_WIDTH>, VGA_BUFFER_HEIGHT> {
@@ -108,11 +119,15 @@ impl Shell {
         if self.cursor_position > SHELL_PROMPT.len() {
             self.cursor_position -= 1;
             let cursor_position = self.cursor_position;
-            let line = self.get_command_line_data();
-            let end_pos = line.len();
+            let cmd_line = self.buffer.get_mut_unsafe(COMMAND_LINE_ROW_INDEX);
+            let end_pos = cmd_line.len();
 
-            line.pop_at(cursor_position)
-                .map(|_| (&*self.get_command_line_data(), cursor_position..end_pos))
+            cmd_line.pop_at(cursor_position).map(|_| {
+                (
+                    &*self.buffer.get_mut_unsafe(COMMAND_LINE_ROW_INDEX),
+                    cursor_position..end_pos,
+                )
+            })
         } else {
             None
         }
@@ -126,7 +141,8 @@ impl Shell {
                 }
             }
             NavigationKey::Right => {
-                if self.cursor_position < self.get_command_line_data().len() {
+                let cmd_line = self.buffer.get_unsafe(COMMAND_LINE_ROW_INDEX);
+                if self.cursor_position < cmd_line.len() {
                     self.cursor_position += 1;
                 }
             }

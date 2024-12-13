@@ -25,10 +25,25 @@ fn inb(port: u16) -> u8 {
     }
 }
 
-pub fn outb(port: u16, value: u8) {
+fn outb(port: u16, value: u8) {
     unsafe {
         asm!("out dx, al", in("al") value, in("dx") port);
     }
+}
+
+fn outw(port: u16, value: u16) {
+    unsafe {
+        asm!("out dx, ax", in("dx") port, in("ax") value);
+    }
+}
+
+pub fn exit_qemu() {
+    outw(0x604, 0x2000);
+}
+
+/// via keyboard controller
+pub fn reboot() {
+    outb(0x64, 0xFE);
 }
 
 pub fn read_scancode() -> Option<Key> {
