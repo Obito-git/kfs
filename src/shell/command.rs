@@ -1,13 +1,15 @@
 use crate::data_structure::StackVec;
 use crate::io::vga::VGA_BUFFER_WIDTH;
-use crate::io::{exit_qemu, reboot};
+use crate::io::{exit_qemu, get_cpu_mode, reboot};
 use crate::shell::{Shell, SHELL_PROMPT};
+use core::fmt::Write;
 
 #[derive(Debug, Copy, Clone)]
 pub enum Command {
     Reboot,
     Clear,
     PowerOff,
+    CpuMode,
 }
 
 impl Command {
@@ -15,6 +17,7 @@ impl Command {
         ("reboot", Command::Reboot),
         ("clear", Command::Clear),
         ("poweroff", Command::PowerOff),
+        ("cpumode", Command::CpuMode),
     ];
 
     pub fn get_handler(&self) -> fn(&mut Shell) {
@@ -22,6 +25,7 @@ impl Command {
             Command::Reboot => |_shell| reboot(),
             Command::Clear => Shell::clear_buffer,
             Command::PowerOff => |_shell| exit_qemu(),
+            Command::CpuMode => |shell| Shell::write_str(shell, get_cpu_mode().to_str()).unwrap(),
         }
     }
 }

@@ -9,6 +9,11 @@ use keyboard::Key;
 const KEYBOARD_STATUS_PORT: u16 = 0x64;
 const KEYBOARD_DATA_PORT: u16 = 0x60;
 
+/*
+   TODO: move to another module, or somehow categorize it
+   TODO: inline assembly should be arch dependent
+*/
+
 pub fn set_cursor_position(x: u8, y: u8) {
     let position: u16 = y as u16 * VGA_BUFFER_WIDTH as u16 + x as u16;
     outb(0x3D4, 0x0F);
@@ -52,5 +57,59 @@ pub fn read_scancode() -> Option<Key> {
         Key::from_scancode(scancode)
     } else {
         None
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum CpuMode {
+    Real,
+    Protected,
+    Long,
+    Unknown,
+}
+
+impl CpuMode {
+    pub fn to_str(&self) -> &str {
+        match self {
+            CpuMode::Real => "CPU is in Real Mode",
+            CpuMode::Protected => "CPU is in Protected Mode",
+            CpuMode::Long => "CPU is in Long Mode",
+            CpuMode::Unknown => "CPU is in Unknown Mode",
+        }
+    }
+}
+
+pub fn get_cpu_mode() -> CpuMode {
+    // Check CR0 PE bit for protected mode
+    let cr0: u32;  // Changed from u64 to u32 for i386
+    unsafe {
+        asm!(
+        "mov {}, cr0",
+        out(reg) cr0,
+        options(nomem, nostack, preserves_flags)
+        );
+    }
+
+    // Check EFER MSR for long mode
+    let efer_lo: u32;
+    let _efer_hi: u32;
+    unsafe {
+        asm!(
+        "mov ecx, 0xC0000080", // EFER MSR
+        "rdmsr",
+        out("eax") efer_lo,
+        out("edx") _efer_hi,
+        options(nomem, nostack, preserves_flags)
+        );
+    }
+
+    let pe_bit = cr0 & 1;
+    let lma_bit = ((efer_lo as u32) >> 8) & 1;  // Changed cast to u32
+
+    match (pe_bit, lma_bit) {
+        (0, 0) => CpuMode::Real,
+        (1, 0) => CpuMode::Protected,
+        (1, 1) => CpuMode::Long,
+        _ => CpuMode::Unknown,
     }
 }

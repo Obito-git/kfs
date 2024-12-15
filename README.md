@@ -261,3 +261,8 @@ The `/docs` directory contains:
 ### VGA Text Mode
 
 - https://en.wikipedia.org/wiki/VGA_text_mode
+
+### Global descriptor table
+- history (good introduction) until 13:00 https://www.youtube.com/watch?v=EBdzWFyKZ0U&t=30s
+- tutorial https://wiki.osdev.org/GDT_Tutorial
+- wiki https://en.wikipedia.org/wiki/Protected_mode
