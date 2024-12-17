@@ -1,8 +1,8 @@
-use crate::io::color::{Color, ColorCode};
-use crate::io::vga::VGAScreenManager;
+use crate::io::vga::color::{Color, ColorCode};
 use core::fmt;
 use lazy_static::lazy_static;
 use spin::mutex::Mutex;
+use crate::io::vga::manager::VGAScreenManager;
 
 const TERMINAL_STYLES: &[ColorCode; 3] = &[
     ColorCode::new(Color::LightGreen, Color::Black),

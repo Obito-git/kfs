@@ -1,11 +1,11 @@
 mod command;
 
 use crate::data_structure::StackVec;
-use crate::io::keyboard::NavigationKey;
 use crate::io::vga::{SHELL_BUFFER_HEIGHT, SHELL_COMMAND_LINE_ROW_INDEX, VGA_BUFFER_WIDTH};
 use crate::shell::command::Command;
 use core::fmt;
 use core::fmt::Write;
+use crate::io::keyboard::NavigationKey;
 
 pub const SHELL_PROMPT: &str = "$> ";
 const HEADER: &'static str = r"

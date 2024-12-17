@@ -5,7 +5,7 @@
 use crate::io::read_scancode;
 use crate::print::VGA_SCREEN_MANAGER;
 use core::panic::PanicInfo;
-use io::keyboard::{ControlKey, Key, Number, PrintableKey};
+use crate::io::keyboard::{ControlKey, Key, Number, PrintableKey};
 
 mod data_structure;
 mod io;

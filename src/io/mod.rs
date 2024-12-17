@@ -1,10 +1,9 @@
-pub mod color;
 pub mod keyboard;
 pub mod vga;
 
 use crate::io::vga::VGA_BUFFER_WIDTH;
 use core::arch::asm;
-use keyboard::Key;
+use crate::io::keyboard::Key;
 
 const KEYBOARD_STATUS_PORT: u16 = 0x64;
 const KEYBOARD_DATA_PORT: u16 = 0x60;
