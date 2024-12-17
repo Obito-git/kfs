@@ -2,7 +2,7 @@ mod command;
 
 use crate::data_structure::StackVec;
 use crate::io::keyboard::NavigationKey;
-use crate::io::vga::{COMMAND_LINE_ROW_INDEX, VGA_BUFFER_HEIGHT, VGA_BUFFER_WIDTH};
+use crate::io::vga::{SHELL_BUFFER_HEIGHT, SHELL_COMMAND_LINE_ROW_INDEX, VGA_BUFFER_WIDTH};
 use crate::shell::command::Command;
 use core::fmt;
 use core::fmt::Write;
@@ -23,12 +23,12 @@ const HEADER: &'static str = r"
 #[derive(Debug, Copy)]
 pub struct Shell {
     cursor_position: usize,
-    buffer: StackVec<StackVec<u8, VGA_BUFFER_WIDTH>, VGA_BUFFER_HEIGHT>,
+    buffer: StackVec<StackVec<u8, VGA_BUFFER_WIDTH>, SHELL_BUFFER_HEIGHT>,
 }
 
 impl Shell {
     pub fn new() -> Self {
-        let buffer: StackVec<StackVec<u8, VGA_BUFFER_WIDTH>, VGA_BUFFER_HEIGHT> =
+        let buffer: StackVec<StackVec<u8, VGA_BUFFER_WIDTH>, SHELL_BUFFER_HEIGHT> =
             StackVec::new(StackVec::new(b' '));
         let mut shell = Self {
             cursor_position: 0,
@@ -52,7 +52,8 @@ impl Shell {
     pub fn write_byte_to_the_command_line(&mut self, byte: u8) {
         match byte {
             b'\n' => {
-                let command = Command::try_from(self.buffer.get_unsafe(COMMAND_LINE_ROW_INDEX));
+                let command =
+                    Command::try_from(self.buffer.get_unsafe(SHELL_COMMAND_LINE_ROW_INDEX));
                 self.new_line();
                 match command {
                     Ok(command) => {
@@ -78,7 +79,7 @@ impl Shell {
             b'\n' => self.new_line(),
             byte => {
                 let cursor_position = self.cursor_position;
-                let cmd_line = self.buffer.get_mut_unsafe(COMMAND_LINE_ROW_INDEX);
+                let cmd_line = self.buffer.get_mut_unsafe(SHELL_COMMAND_LINE_ROW_INDEX);
                 if cmd_line.push_at(cursor_position, byte) {
                     self.cursor_position += 1;
                 }
@@ -91,14 +92,14 @@ impl Shell {
     }
 
     fn new_line(&mut self) {
-        for row in 1..VGA_BUFFER_HEIGHT {
+        for row in 1..SHELL_BUFFER_HEIGHT {
             let (row_data, row_len) = self.buffer.get_unsafe(row).copy();
             self.buffer
                 .get_mut_unsafe(row - 1)
                 .copy_from(&row_data, row_len);
         }
 
-        let cmd_line = self.buffer.get_mut_unsafe(COMMAND_LINE_ROW_INDEX);
+        let cmd_line = self.buffer.get_mut_unsafe(SHELL_COMMAND_LINE_ROW_INDEX);
         cmd_line.clear();
 
         self.cursor_position = 0;
@@ -109,7 +110,7 @@ impl Shell {
         self.cursor_position = 0;
     }
 
-    pub fn get_data(&self) -> &StackVec<StackVec<u8, VGA_BUFFER_WIDTH>, VGA_BUFFER_HEIGHT> {
+    pub fn get_data(&self) -> &StackVec<StackVec<u8, VGA_BUFFER_WIDTH>, SHELL_BUFFER_HEIGHT> {
         &self.buffer
     }
 
@@ -119,12 +120,12 @@ impl Shell {
         if self.cursor_position > SHELL_PROMPT.len() {
             self.cursor_position -= 1;
             let cursor_position = self.cursor_position;
-            let cmd_line = self.buffer.get_mut_unsafe(COMMAND_LINE_ROW_INDEX);
+            let cmd_line = self.buffer.get_mut_unsafe(SHELL_COMMAND_LINE_ROW_INDEX);
             let end_pos = cmd_line.len();
 
             cmd_line.pop_at(cursor_position).map(|_| {
                 (
-                    &*self.buffer.get_mut_unsafe(COMMAND_LINE_ROW_INDEX),
+                    &*self.buffer.get_mut_unsafe(SHELL_COMMAND_LINE_ROW_INDEX),
                     cursor_position..end_pos,
                 )
             })
@@ -141,10 +142,14 @@ impl Shell {
                 }
             }
             NavigationKey::Right => {
-                let cmd_line = self.buffer.get_unsafe(COMMAND_LINE_ROW_INDEX);
+                let cmd_line = self.buffer.get_unsafe(SHELL_COMMAND_LINE_ROW_INDEX);
                 if self.cursor_position < cmd_line.len() {
                     self.cursor_position += 1;
                 }
+            }
+            NavigationKey::Home => self.cursor_position = SHELL_PROMPT.len(),
+            NavigationKey::End => {
+                self.cursor_position = self.buffer.get_unsafe(SHELL_COMMAND_LINE_ROW_INDEX).len();
             }
             _ => (),
         }

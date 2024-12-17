@@ -22,6 +22,16 @@ pub fn set_cursor_position(x: u8, y: u8) {
     outb(0x3D5, ((position >> 8) & 0xFF) as u8);
 }
 
+pub fn hide_cursor() {
+    outb(0x3D4, 0x0A);
+    outb(0x3D5, 0x20);
+}
+
+pub fn show_cursor() {
+    outb(0x3D4, 0x0A);
+    outb(0x3D5, 0x00);
+}
+
 fn inb(port: u16) -> u8 {
     unsafe {
         let ret: u8;
@@ -81,7 +91,7 @@ impl CpuMode {
 
 pub fn get_cpu_mode() -> CpuMode {
     // Check CR0 PE bit for protected mode
-    let cr0: u32;  // Changed from u64 to u32 for i386
+    let cr0: u32; // Changed from u64 to u32 for i386
     unsafe {
         asm!(
         "mov {}, cr0",
@@ -90,12 +100,11 @@ pub fn get_cpu_mode() -> CpuMode {
         );
     }
 
-    // Check EFER MSR for long mode
     let efer_lo: u32;
     let _efer_hi: u32;
     unsafe {
         asm!(
-        "mov ecx, 0xC0000080", // EFER MSR
+        "mov ecx, 0xC0000080",
         "rdmsr",
         out("eax") efer_lo,
         out("edx") _efer_hi,
@@ -104,7 +113,7 @@ pub fn get_cpu_mode() -> CpuMode {
     }
 
     let pe_bit = cr0 & 1;
-    let lma_bit = ((efer_lo as u32) >> 8) & 1;  // Changed cast to u32
+    let lma_bit = ((efer_lo) >> 8) & 1;
 
     match (pe_bit, lma_bit) {
         (0, 0) => CpuMode::Real,

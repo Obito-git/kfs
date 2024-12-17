@@ -3,6 +3,9 @@
 /// because after adding heap, we could probably write our allocator
 /// to use/reuse/adapt the existing Vector or probably Linked lists or something else
 /// that requires memory allocation
+
+/// 5 days after writing previous comment block:
+/// The shit should be 100% rewritten
 #[derive(Debug, Copy, Clone)]
 pub struct StackVec<T, const N: usize> {
     data: [T; N],
@@ -107,10 +110,7 @@ impl<T: Copy, const N: usize> StackVec<T, N> {
     }
 
     pub fn slice(&self, range: core::ops::Range<usize>) -> &[T] {
-        let end = range.end.min(self.len);
-        let start = range.start.min(end);
-
-        &self.data[start..end]
+        &self.data[range.start..range.end]
     }
 
     pub fn get_unsafe(&self, index: usize) -> &T {

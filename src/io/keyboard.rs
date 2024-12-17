@@ -65,6 +65,8 @@ pub enum NavigationKey {
     Right,
     PageUp,
     PageDown,
+    Home,
+    End,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -128,6 +130,8 @@ impl Key {
             0x4D => Some(Key::Navigation(NavigationKey::Right)),
             0x49 => Some(Key::Navigation(NavigationKey::PageUp)),
             0x51 => Some(Key::Navigation(NavigationKey::PageDown)),
+            0x47 => Some(Key::Navigation(NavigationKey::Home)),
+            0x4F => Some(Key::Navigation(NavigationKey::End)),
 
             // Control
             0x1D => Some(Key::Control(ControlKey::CtrlPressed)),

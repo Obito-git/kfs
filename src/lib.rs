@@ -32,7 +32,7 @@ pub extern "C" fn _start() -> ! {
                     },
                     _ => write_command_line_byte!(c.into()),
                 },
-                Key::Navigation(nav) => VGA_SCREEN_MANAGER.lock().move_cursor(nav),
+                Key::Navigation(nav) => VGA_SCREEN_MANAGER.lock().navigate(nav),
                 Key::Control(ctr) => match ctr {
                     ControlKey::CtrlPressed | ControlKey::CtrlReleased => control_state = ctr,
                     ControlKey::Backspace => VGA_SCREEN_MANAGER.lock().handle_backspace(),
