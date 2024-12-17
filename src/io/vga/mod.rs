@@ -11,7 +11,6 @@ use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
 
-mod status_panel;
 
 const SHELLS_COUNT: usize = 3;
 const VGA_BUFFER_ADDRESS: usize = 0xb8000;
