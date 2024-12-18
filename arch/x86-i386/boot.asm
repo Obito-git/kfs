@@ -1,13 +1,17 @@
 global start
+extern load_gdt
+extern _start
 
 section .text
 bits 32
 start:
-    extern _start
-    call _start
+    mov esp, stack_top      ; Initialize stack pointer
+    call load_gdt           ; Load our GDT
+    call _start            ; Jump to Rust code
+    hlt                    ; Halt CPU if we return
 
-    mov eax, 0x2f592f42   ; 'BY' with attributes
-    mov dword [0xb8000], eax
-    mov eax, 0x2f452f45   ; 'EE' with attributes (second E is padding)
-    mov dword [0xb8004], eax
-    hlt
+section .bss
+align 4096
+stack_bottom:
+    resb 4096 * 256        ; 1MB stack size
+stack_top:
