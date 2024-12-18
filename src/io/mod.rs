@@ -1,9 +1,9 @@
 pub mod keyboard;
 pub mod vga;
 
+use crate::io::keyboard::Key;
 use crate::io::vga::VGA_BUFFER_WIDTH;
 use core::arch::asm;
-use crate::io::keyboard::Key;
 
 const KEYBOARD_STATUS_PORT: u16 = 0x64;
 const KEYBOARD_DATA_PORT: u16 = 0x60;
@@ -36,6 +36,14 @@ fn inb(port: u16) -> u8 {
         let ret: u8;
         asm!("in al, dx", out("al") ret, in("dx") port);
         ret
+    }
+}
+
+pub fn get_esp() -> u32 {
+    unsafe {
+        let esp: u32;
+        asm!("mov {}, esp", out(reg) esp);
+        esp
     }
 }
 

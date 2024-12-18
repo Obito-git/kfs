@@ -1,4 +1,5 @@
 global start
+global stack_top
 extern load_gdt
 extern _start
 
