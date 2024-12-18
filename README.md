@@ -266,3 +266,5 @@ The `/docs` directory contains:
 - history (good introduction) until 13:00 https://www.youtube.com/watch?v=EBdzWFyKZ0U&t=30s
 - tutorial https://wiki.osdev.org/GDT_Tutorial
 - wiki https://en.wikipedia.org/wiki/Protected_mode
+- https://www.youtube.com/watch?v=Wh5nPn2U_1w&t=308s
+- https://www.youtube.com/watch?v=jwulDRMQ53I

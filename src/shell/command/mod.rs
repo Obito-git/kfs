@@ -3,10 +3,8 @@ mod print_stack;
 use crate::data_structure::StackVec;
 use crate::io::vga::VGA_BUFFER_WIDTH;
 use crate::io::{exit_qemu, reboot};
-use crate::shell::command::print_stack::print_stack;
+use crate::shell::command::print_stack::{hexdump_stack, test_stack};
 use crate::shell::{Shell, SHELL_PROMPT};
-use core::arch::asm;
-use core::fmt::Write;
 
 #[derive(Debug, Copy, Clone)]
 pub enum Command {
@@ -14,6 +12,7 @@ pub enum Command {
     Clear,
     PowerOff,
     PrintKernelStack,
+    PrintTestStack,
 }
 
 impl Command {
@@ -22,6 +21,7 @@ impl Command {
         ("clear", Command::Clear),
         ("poweroff", Command::PowerOff),
         ("pks", Command::PrintKernelStack),
+        ("pts", Command::PrintTestStack),
     ];
 
     pub fn get_handler(&self) -> fn(&mut Shell) {
@@ -29,9 +29,8 @@ impl Command {
             Command::Reboot => |_shell| reboot(),
             Command::Clear => Shell::clear_buffer,
             Command::PowerOff => |_shell| exit_qemu(),
-            Command::PrintKernelStack => |_shell| {
-                print_stack(_shell, 32);
-            },
+            Command::PrintKernelStack => |shell| hexdump_stack(shell),
+            Command::PrintTestStack => |shell| test_stack(shell),
         }
     }
 }
