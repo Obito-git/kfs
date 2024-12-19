@@ -12,7 +12,7 @@ use volatile::Volatile;
 const SHELLS_COUNT: usize = 3;
 const VGA_BUFFER_ADDRESS: usize = 0xb8000;
 pub const VGA_BUFFER_HEIGHT: usize = 25;
-pub const SHELL_BUFFER_HEIGHT: usize = VGA_BUFFER_HEIGHT * 10;
+pub const SHELL_BUFFER_HEIGHT: usize = VGA_BUFFER_HEIGHT * 5;
 pub const VGA_BUFFER_WIDTH: usize = 80;
 pub const VGA_COMMAND_LINE_ROW_INDEX: usize = VGA_BUFFER_HEIGHT - 1;
 pub const SHELL_COMMAND_LINE_ROW_INDEX: usize = SHELL_BUFFER_HEIGHT - 1;
