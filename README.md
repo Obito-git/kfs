@@ -207,6 +207,7 @@ The `/docs` directory contains:
 
 ### Core Requirements
 
+#### Kfs-1
 - [x] Implement a complete Makefile for the project
 - [x] Create and use a custom linker script (.ld)
 - [x] Target i386 (x86) architecture
@@ -214,6 +215,7 @@ The `/docs` directory contains:
 
 ### Boot Process
 
+#### Kfs-1
 - [x] Create bootable kernel with GRUB
 - [x] Install GRUB on virtual image
 - [x] Implement ASM boot code with multiboot header
@@ -221,12 +223,14 @@ The `/docs` directory contains:
 
 ### Kernel Development
 
+#### Kfs-1
 - [x] Write basic kernel code in chosen language (Rust)
 - [x] Compile with appropriate flags
 - [x] Link components to create bootable binary
 
 ### I/O Interface
 
+#### Kfs-1
 - [x] Implement VGA screen interface (VgaScreen and VgaScreenManager)
 - [x] Successfully display "42" on screen
 - [x] Add scroll support
@@ -236,12 +240,14 @@ The `/docs` directory contains:
 
 ### Input & Multi-screen Support
 
+#### Kfs-1
 - [x] Handle keyboard input and display characters
 - [x] Implement multiple screen support (3 screens)
 - [x] Add keyboard shortcuts for screen switching (Ctrl+1, Ctrl+2, Ctrl+3)
 
 ### Build System
 
+#### Kfs-1
 - [x] Configure Makefile to handle multiple languages (ASM + Rust)
 - [x] Properly link all object files into final kernel binary
 - [x] Set appropriate compiler flags for each language
