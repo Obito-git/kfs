@@ -1,11 +1,11 @@
 use crate::data_structure::IteratorType::Capacity;
+use crate::io::keyboard::NavigationKey;
 use crate::io::vga::color::{ColorCode, ScreenChar};
 use crate::io::vga::screen::VgaScreen;
 use crate::io::vga::{SHELLS_COUNT, VGA_BUFFER, VGA_COMMAND_LINE_ROW_INDEX, VGA_MIN_FIRST_LINE};
 use crate::io::{hide_cursor, show_cursor};
 use core::fmt;
 use core::fmt::Write;
-use crate::io::keyboard::NavigationKey;
 
 pub struct VGAScreenManager {
     shells: [VgaScreen; SHELLS_COUNT],
@@ -109,6 +109,14 @@ impl VGAScreenManager {
     }
 
     pub fn change_terminal(&mut self, terminal_nbr: usize) {
+        match (
+            self.shells[self.active_shell_index].is_scrolling_mode_enabled,
+            self.shells[terminal_nbr].is_scrolling_mode_enabled,
+        ) {
+            (false, true) => hide_cursor(),
+            (true, false) => show_cursor(),
+            (_, _) => {}
+        }
         self.active_shell_index = terminal_nbr;
         self.render_current_screen()
     }
