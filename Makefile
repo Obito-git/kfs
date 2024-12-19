@@ -32,7 +32,11 @@ $(iso): $(kernel) $(grub_cfg)
 	@mkdir -p build/isofiles/boot/grub
 	@cp $(kernel) build/isofiles/boot/kfs.bin
 	@cp $(grub_cfg) build/isofiles/boot/grub
-	@grub-mkrescue --compress xz -o $(iso) build/isofiles 2> /dev/null
+	@grub-mkrescue --compress xz \
+		--locales="" \
+        --fonts="" \
+        --themes="" \
+		-o $(iso) build/isofiles 2> /dev/null
 	@rm -r build/isofiles
 
 $(kernel): kernel $(rust_os) $(assembly_object_files) $(linker_script)
