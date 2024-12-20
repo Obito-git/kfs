@@ -39,9 +39,9 @@ fn inb(port: u16) -> u8 {
     }
 }
 
-pub fn get_esp() -> u32 {
+pub fn get_esp() -> usize {
     unsafe {
-        let esp: u32;
+        let esp: usize;
         asm!("mov {}, esp", out(reg) esp);
         esp
     }
