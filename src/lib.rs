@@ -2,22 +2,39 @@
 #![allow(internal_features)]
 #![feature(ptr_internals)]
 
+use crate::io::keyboard::{ControlKey, Key, Number, PrintableKey};
 use crate::io::read_scancode;
+use crate::memory::multiboot::{BootInformation, BootInformationHeader};
 use crate::print::VGA_SCREEN_MANAGER;
 use core::panic::PanicInfo;
-use crate::io::keyboard::{ControlKey, Key, Number, PrintableKey};
 
 mod data_structure;
 mod io;
+mod memory;
 mod print;
 mod shell;
 
-#[derive(Default, Copy, Clone)]
-pub struct Foo();
 
 #[no_mangle]
-pub extern "C" fn _start() -> ! {
+pub extern "C" fn kmain(multiboot_info_addr: u32) -> ! {
     VGA_SCREEN_MANAGER.lock().render_current_screen();
+    let boot_info = unsafe {
+        BootInformation::load(multiboot_info_addr as *const BootInformationHeader)
+            .expect("Invalid boot information")
+    };
+
+    if let Some(mmap_tag) = boot_info.memory_map_tag() {
+        println!("Physical memory areas:");
+        for area in mmap_tag.memory_areas() {
+            println!(
+                "    start: 0x{:x}, length: 0x{:x}, type: {:?}",
+                area.base_addr,
+                area.length,
+                area.region_type
+            );
+        }
+    }
+
 
     let mut control_state = ControlKey::CtrlReleased;
     loop {

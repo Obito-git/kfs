@@ -1,4 +1,4 @@
-ENTRY(start)
+ENTRY(_start)
 
 SECTIONS {
     /* GDT must be at 0x800 */
@@ -15,9 +15,18 @@ SECTIONS {
         KEEP(*(.multiboot_header))
     }
 
-    .text ALIGN(4K) :
+    .text :
     {
-        *(.text)
+        *(.text .text.*)
+    }
+    .rodata : 
+    {
+        *(.rodata .rodata.*)
+    }
+    
+    .data.rel.ro :
+    {
+        *(.data.rel.ro.local*) *(.data.rel.ro .data.rel.ro.*)
     }
 
     .bss ALIGN(4K) :

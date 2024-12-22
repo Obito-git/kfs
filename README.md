@@ -484,3 +484,24 @@ Two commands are implemented to examine kernel stack contents:
 - wiki https://en.wikipedia.org/wiki/Protected_mode
 - https://www.youtube.com/watch?v=Wh5nPn2U_1w&t=308s
 - https://www.youtube.com/watch?v=jwulDRMQ53I
+
+--------------------------------------------------------------------------------------------
+# Memory management
+
+Step 1: Define Rust structures that match the Multiboot2 memory layout
+
+Create structs that exactly match how the data is laid out in memory
+Use #[repr(C)] to ensure correct memory layout
+These structs will help us safely read the multiboot information
+
+Step 2: Create functions to safely traverse the Multiboot2 information
+
+Write code to walk through the tags
+Each tag has a type and size that tells us what information it contains
+We're particularly interested in the memory map tag (type 6) and ELF sections tag
+
+Step 3: Create a memory frame abstraction
+
+After we can read the memory map, we'll represent physical memory as frames
+Each frame will be 4KB (standard page size)
+We'll need to mark which frames contain kernel code, multiboot info, or are reserved
