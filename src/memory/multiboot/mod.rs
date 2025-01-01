@@ -1,5 +1,7 @@
 use core::mem::size_of;
 
+//TODO: pub struct variables members should be private, and provide getters
+
 #[repr(C)]
 pub struct BootInformationHeader {
     total_size: u32,
@@ -40,6 +42,69 @@ pub enum TagType {
 }
 
 #[repr(C)]
+pub struct ElfSectionsTag {
+    typ: u32,
+    size: u32,
+    num: u32,
+    entry_size: u32,
+    shndx: u32,
+    first_section: ElfSection,
+}
+
+#[repr(C)]
+pub struct ElfSection {
+    name: u32,
+    typ: u32,
+    pub(crate) flags: u32,        
+    pub(crate) addr: u32,         
+    offset: u32,       
+    pub(crate) size: u32,         
+    link: u32,
+    info: u32,
+    addralign: u32,    
+    entry_size: u32,   
+}
+
+impl ElfSectionsTag {
+    pub fn sections(&self) -> ElfSectionIter {
+        let sections_start = (&self.first_section) as *const _;
+        ElfSectionIter {
+            current: sections_start,
+            remaining: self.num,
+            entry_size: self.entry_size,
+        }
+    }
+}
+
+pub struct ElfSectionIter {
+    current: *const ElfSection,
+    remaining: u32,
+    entry_size: u32,
+}
+
+impl Iterator for ElfSectionIter {
+    type Item = &'static ElfSection;
+
+    /// Skips null sections
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.remaining > 0 {
+            let section = unsafe { &*self.current };
+
+            self.current = unsafe {
+                (self.current as *const u8)
+                    .add(self.entry_size as usize) as *const ElfSection
+            };
+            self.remaining -= 1;
+
+            if section.size > 0 && section.addr > 0 {
+                return Some(section);
+            }
+        }
+        None
+    }
+}
+
+#[repr(C)]
 pub struct MemoryMapTag {
     header: TagHeader,
     entry_size: u32,
@@ -72,8 +137,8 @@ impl MemoryMapEntry {
 
 #[derive(Debug)]
 pub struct BootInformation {
-    addr: *const BootInformationHeader,
-    size: u32,
+    pub(crate) addr: *const BootInformationHeader,
+    pub(crate) size: u32,
 }
 
 impl BootInformation {
@@ -103,6 +168,20 @@ impl BootInformation {
         self.tags()
             .find(|tag| tag.tag_type == TagType::MemoryMap)
             .map(|tag| unsafe { &*(tag as *const _ as *const MemoryMapTag) })
+    }
+
+    pub fn start_address(&self) -> u32 {
+        self.addr as u32
+    }
+
+    pub fn end_address(&self) -> u32 {
+        (self.addr as u32) + self.size
+    }
+
+    pub fn elf_sections_tag(&self) -> Option<&ElfSectionsTag> {
+        self.tags()
+            .find(|tag| tag.tag_type == TagType::ELFSections)
+            .map(|tag| unsafe { &*(tag as *const _ as *const ElfSectionsTag) })
     }
 }
 
@@ -137,34 +216,31 @@ impl Iterator for TagIterator {
 impl MemoryMapTag {
     pub fn memory_areas(&self) -> MemoryAreaIter {
         let entries_addr = (self as *const _) as usize + size_of::<MemoryMapTag>();
-        MemoryAreaIter {
-            current: entries_addr as *const MemoryMapEntry,
-            end: (entries_addr + self.header.size as usize - size_of::<MemoryMapTag>())
-                as *const MemoryMapEntry,
-            entry_size: self.entry_size,
-        }
+        let entries_count = (self.header.size as usize - size_of::<MemoryMapTag>()) / size_of::<MemoryMapEntry>();
+        let areas = unsafe {
+            core::slice::from_raw_parts(entries_addr as *const MemoryMapEntry, entries_count)
+        };
+        MemoryAreaIter { areas, index: 0 }
     }
 }
 
-pub struct MemoryAreaIter {
-    current: *const MemoryMapEntry,
-    end: *const MemoryMapEntry,
-    entry_size: u32,
+
+#[derive(Clone)]
+pub struct MemoryAreaIter<'a> {
+    areas: &'a [MemoryMapEntry],
+    index: usize,
 }
 
-impl Iterator for MemoryAreaIter {
-    type Item = &'static MemoryMapEntry;
+impl<'a> Iterator for MemoryAreaIter<'a> {
+    type Item = &'a MemoryMapEntry;
 
     fn next(&mut self) -> Option<Self::Item> {
-        unsafe {
-            if self.current >= self.end {
-                None
-            } else {
-                let entry = &*self.current;
-                self.current =
-                    (self.current as usize + self.entry_size as usize) as *const MemoryMapEntry;
-                Some(entry)
-            }
+        if self.index < self.areas.len() {
+            let entry = &self.areas[self.index];
+            self.index += 1;
+            Some(entry)
+        } else {
+            None
         }
     }
 }

@@ -505,3 +505,87 @@ Step 3: Create a memory frame abstraction
 After we can read the memory map, we'll represent physical memory as frames
 Each frame will be 4KB (standard page size)
 We'll need to mark which frames contain kernel code, multiboot info, or are reserved
+
+---
+https://os.phil-opp.com/allocating-frames/#testing-it
+---
+Right now we have:
+
+Parsed Multiboot2 information structure
+Created a Frame abstraction (4KB blocks)
+Built a simple sequential frame allocator that can:
+
+Track available physical memory regions
+Skip frames used by kernel and multiboot info
+Allocate frames sequentially
+But can't deallocate memory yet
+---
+
+
+# Print physical mem and kernel sections
+
+```rust
+    if let Some(mmap_tag) = boot_info.memory_map_tag() {
+        println!("Physical memory areas:");
+        for area in mmap_tag.memory_areas() {
+            println!(
+                "    start: 0x{:x}, length: 0x{:x}, type: {:?}",
+                area.base_addr, area.length, area.region_type
+            );
+        }
+    }
+
+    let elf_sections_tag = boot_info
+        .elf_sections_tag()
+        .expect("Elf-sections tag required");
+
+    println!("kernel sections:");
+    for section in elf_sections_tag.sections() {
+        println!(
+            "    addr: 0x{:x}, size: 0x{:x}, flags: 0x{:x}",
+            section.addr, section.size, section.flags
+        );
+    }
+
+    let kernel_start = elf_sections_tag.sections().map(|s| s.addr).min().unwrap();
+    let kernel_end = elf_sections_tag
+        .sections()
+        .map(|s| s.addr + s.size)
+        .max()
+        .unwrap();
+
+    let multiboot_start = multiboot_info_addr;
+    let multiboot_end = multiboot_start + (boot_info.size);
+    println!(
+        "kernel start: 0x{:x}, end: 0x{:x}",
+        kernel_start, kernel_end
+    );
+    println!(
+        "multiboot start: 0x{:x}, end: 0x{:x}",
+        multiboot_start, multiboot_end
+    );
+
+    println!("---------------------------");
+
+    #[inline(always)]
+    fn read_cr0() -> u32 {
+        let cr0: u32;
+        unsafe {
+            asm!(
+            "mov {0:e}, cr0",    // Move CR0 into the output register
+            out(reg) cr0,
+            options(nostack)
+            );
+        }
+        cr0
+    }
+
+    /// Returns `true` if paging (PG bit in CR0) is enabled, `false` otherwise.
+    pub fn paging_enabled() -> bool {
+        let cr0_value = read_cr0();
+        // Bit 31 is the PG (Paging) bit. If it’s set, paging is on.
+        (cr0_value & (1 << 31)) != 0
+    }
+
+    println!("paging enabled: {}", paging_enabled());
+```
