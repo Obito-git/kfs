@@ -1,4 +1,5 @@
 use crate::memory::bump_frame_allocator::BumpFrameAllocator;
+use crate::memory::FRAME_ALLOCATOR;
 use bitflags::bitflags;
 use core::arch::asm;
 use core::ptr::write_volatile;
@@ -6,9 +7,6 @@ use lazy_static::lazy_static;
 use spin::mutex::Mutex;
 
 pub const PAGE_SIZE: usize = 4096;
-extern "C" {
-    pub static multiboot_info_addr: u32;
-}
 
 lazy_static! {
     static ref KERNEL_PAGE_DIRECTORY: Mutex<PageDirectory> = Mutex::new(PageDirectory {
@@ -146,9 +144,10 @@ impl PhysicalAddress {
 
 /// Creates an identity-mapped paging structure.
 /// Maps physical addresses 0x00000000 to 0x003FFFFF (first 4 MB).
-pub fn setup_identity_mapping(bump_frame_allocator: &mut BumpFrameAllocator) {
+pub fn setup_identity_mapping() {
     unsafe {
-        let pt_frame = bump_frame_allocator
+        let pt_frame = FRAME_ALLOCATOR
+            .lock()
             .allocate_frame()
             .expect("No frame available for Page Table");
         let pt_address = pt_frame.start_address() as *mut PageTable;
@@ -181,7 +180,6 @@ pub fn map_page(
     virtual_address: VirtualAddress,
     physical_address: u32,
     flags: EntryFlags,
-    bump_frame_allocator: &mut BumpFrameAllocator,
 ) {
     // Get the directory and table indices
     let directory_index = virtual_address.directory_index();
@@ -199,7 +197,7 @@ pub fn map_page(
             PageTableEntry::new(physical_address, flags | EntryFlags::PRESENT);
     } else {
         // Allocate a new frame for the page table
-        let frame = bump_frame_allocator
+        let frame = FRAME_ALLOCATOR.lock()
             .allocate_frame()
             .expect("Out of memory for page table!");
         let new_table_address = frame.start_address() as *mut PageTable;
@@ -224,8 +222,8 @@ pub fn map_page(
     }
 }
 
-pub unsafe fn enable_paging(bump_frame_allocator: &mut BumpFrameAllocator) {
-    setup_identity_mapping(bump_frame_allocator);
+pub unsafe fn enable_paging() {
+    setup_identity_mapping();
     let pd_physical_address = KERNEL_PAGE_DIRECTORY.lock().entries.as_ptr() as u32;
 
     asm!(

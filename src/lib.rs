@@ -4,12 +4,14 @@
 
 extern crate alloc;
 
+use alloc::boxed::Box;
+use alloc::vec::Vec;
 use crate::interrupts::enable_interrupts;
 use crate::io::keyboard::{ControlKey, Key, Number, PrintableKey};
 use crate::io::read_scancode;
 use crate::memory::bump_frame_allocator::BumpFrameAllocator;
-use crate::memory::multiboot::{BootInformation, BootInformationHeader};
-use crate::memory::paging::{enable_paging, map_page, multiboot_info_addr, EntryFlags, VirtualAddress,};
+use crate::memory::FRAME_ALLOCATOR;
+use crate::memory::paging::{enable_paging, map_page, EntryFlags, VirtualAddress,};
 use crate::print::VGA_SCREEN_MANAGER;
 
 mod data_structure;
@@ -23,29 +25,20 @@ mod shell;
 #[no_mangle]
 pub extern "C" fn kmain() -> ! {
     VGA_SCREEN_MANAGER.lock().render_current_screen();
-    unsafe {
-        println!("**** {} ***", multiboot_info_addr);
-    }
-    let boot_info = unsafe {
-        BootInformation::load(multiboot_info_addr as *const BootInformationHeader)
-            .expect("Invalid boot information")
-    };
 
-    let mut frame_allocator = BumpFrameAllocator::from(&boot_info);
 
     unsafe {
-        enable_paging(&mut frame_allocator);
+        enable_paging();
     }
 
     let test_virtual_address = VirtualAddress::new(0xC000_0000); // Example virtual address
-    let test_physical_frame = frame_allocator.allocate_frame().expect("Out of memory!");
+    let test_physical_frame = FRAME_ALLOCATOR.lock().allocate_frame().expect("Out of memory!");
     let test_physical_address = test_physical_frame.start_address() as u32;
 
     map_page(
         test_virtual_address,
         test_physical_address,
         EntryFlags::WRITABLE,
-        &mut frame_allocator,
     );
 
     println!(
@@ -67,18 +60,25 @@ pub extern "C" fn kmain() -> ! {
         enable_interrupts();
     }
 
+
+
+    let mut vector = Vec::new();
+    vector.push(1);
+    vector.push(2);
+    vector.push(3);
+    vector.push(4);
+    vector.push(5);
+
+    println!("It didn't crash, {vector:?}");
+
     /*
-
-    let x = Box::new(41);
-
-    println!("It didn't crash");
-
     unsafe {
         let dead_ptr = 0xdeadbeef as *mut u32;
         *dead_ptr = 0xDEADBEEF;
     }
-
      */
+
+
 
     let mut control_state = ControlKey::CtrlReleased;
     loop {

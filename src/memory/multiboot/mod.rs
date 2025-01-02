@@ -122,6 +122,7 @@ pub enum MemoryRegionType {
 }
 
 #[repr(C)]
+#[derive(Copy, Clone)]
 pub struct MemoryMapEntry {
     pub base_addr: u64,
     pub length: u64,
