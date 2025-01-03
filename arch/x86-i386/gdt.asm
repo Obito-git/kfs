@@ -4,10 +4,6 @@ global gdt_ptr
 global gdt_start
 global gdt_end
 
-gdt_ptr:
-    dw (gdt_end - gdt_start - 1)   ; GDT size minus 1
-    dd gdt_start                    ; GDT start address
-
 gdt_start:
     ; Null descriptor (required)
     dd 0x0
@@ -61,7 +57,10 @@ gdt_start:
     db 0xF2      ; Access - Ring 3, Data
     db 0xCF
     db 0x0
-gdt_end:
+
+gdt_ptr:
+    dw ($ - gdt_start - 1)          ; GDT size minus 1
+    dd gdt_start                    ; GDT start address
 
 section .text
 global load_gdt

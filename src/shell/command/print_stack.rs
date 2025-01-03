@@ -2,12 +2,9 @@ use crate::io::get_esp;
 use crate::shell::Shell;
 use core::fmt::Write;
 
-const BYTES_PER_LINE: usize = 16;
+use super::{stack_start, stack_end};
 
-extern "C" {
-    static stack_start: usize; // top of the stack (highest address)
-    static stack_end: usize; // bottom of the stack (lowest address)
-}
+const BYTES_PER_LINE: usize = 16;
 
 #[no_mangle]
 pub fn test_stack(shell: &mut Shell) {
