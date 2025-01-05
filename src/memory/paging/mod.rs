@@ -1,4 +1,4 @@
-use crate::memory::bump_frame_allocator::BumpFrameAllocator;
+use crate::memory::allocator::bump_frame_allocator::BumpFrameAllocator;
 use crate::memory::FRAME_ALLOCATOR;
 use bitflags::bitflags;
 use core::arch::asm;

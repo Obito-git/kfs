@@ -1,12 +1,11 @@
-use crate::memory::bump_frame_allocator::BumpFrameAllocator;
+use allocator::bump_frame_allocator::BumpFrameAllocator;
 use crate::memory::multiboot::{BootInformation, BootInformationHeader};
 use lazy_static::lazy_static;
 use spin::lock_api::Mutex;
 
-pub mod bump_frame_allocator;
-mod heap;
 pub mod multiboot;
 pub mod paging;
+mod allocator;
 
 extern "C" {
     static multiboot_info_addr: u32;
@@ -25,7 +24,7 @@ lazy_static! {
 
 pub const PAGE_SIZE: usize = 4096;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
 pub struct Frame {
     number: usize,
 }

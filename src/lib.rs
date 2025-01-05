@@ -4,12 +4,11 @@
 
 extern crate alloc;
 
-use alloc::boxed::Box;
+use alloc::vec;
 use alloc::vec::Vec;
 use crate::interrupts::enable_interrupts;
 use crate::io::keyboard::{ControlKey, Key, Number, PrintableKey};
 use crate::io::read_scancode;
-use crate::memory::bump_frame_allocator::BumpFrameAllocator;
 use crate::memory::FRAME_ALLOCATOR;
 use crate::memory::paging::{enable_paging, map_page, EntryFlags, VirtualAddress,};
 use crate::print::VGA_SCREEN_MANAGER;
@@ -26,11 +25,17 @@ mod shell;
 pub extern "C" fn kmain() -> ! {
     VGA_SCREEN_MANAGER.lock().render_current_screen();
 
+    let before_enabling_paging_var = 42_u32; // addr 0x2097c0
+
+    /*
 
     unsafe {
         enable_paging();
+        // before_enabling_paging_var is now accessible at 0xC02097C0
     }
-
+    
+    println!("After paging: {}", before_enabling_paging_var); //it still pointing at addr 0x2097c0 and Page Faults?
+    
     let test_virtual_address = VirtualAddress::new(0xC000_0000); // Example virtual address
     let test_physical_frame = FRAME_ALLOCATOR.lock().allocate_frame().expect("Out of memory!");
     let test_physical_address = test_physical_frame.start_address() as u32;
@@ -62,15 +67,17 @@ pub extern "C" fn kmain() -> ! {
 
 
 
-    let mut vector = Vec::new();
-    vector.push(1);
-    vector.push(2);
-    vector.push(3);
-    vector.push(4);
-    vector.push(5);
+    let mut vector: Vec<usize> = Vec::with_capacity(2024);
+    let mut vector2 = vec![3,4];
+    let mut vector3 = vec![5,6];
 
-    println!("It didn't crash, {vector:?}");
+    
+    println!("It didn't crash, {vector:?}, 0x{:x}", vector.as_ptr().addr());
+    println!("It didn't crash, {vector2:?}, 0x{:x}", vector2.as_ptr().addr());
+    println!("It didn't crash, {vector3:?}, 0x{:x}", vector3.as_ptr().addr());
 
+
+     */
     /*
     unsafe {
         let dead_ptr = 0xdeadbeef as *mut u32;
